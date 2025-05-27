@@ -75,7 +75,7 @@ void afisareArbore(nod* radacina) {
 
 Avion cautareAvionInArboreDupaNrLocuri(nod* radacina, int nrLocuri) {
 	if (radacina) {
-		if (radacina->info.nrLocuri = nrLocuri) {
+		if (radacina->info.nrLocuri == nrLocuri) {
 			return radacina->info;
 		}
 		else {
@@ -89,7 +89,85 @@ Avion cautareAvionInArboreDupaNrLocuri(nod* radacina, int nrLocuri) {
 	}
 }
 
+//arbore binar de cautare echilibrat
+int inaltimeArbore(nod* radacina) {
+	if (radacina) {
+		int inaltimeStanga = inaltimeArbore(radacina->stanga);
+		int inaltimeDreapta = inaltimeArbore(radacina->dreapta);
+		int maxim;
+		if (inaltimeStanga > inaltimeDreapta) {
+			maxim = inaltimeStanga;
+		}
+		else {
+			maxim = inaltimeDreapta;
+		}
+		maxim += 1;
+		return maxim;
+	}
+	else {
+		return 0;
+	}
+}
 
+nod* rotireLaDreapta(nod* radacina) {
+	if (radacina) {
+		nod* aux = radacina->stanga;
+		radacina->stanga = aux->dreapta;
+		aux->dreapta = radacina;
+		return aux;
+	}
+	else return NULL;
+}
+nod* rotireLaStanga(nod* radacina) {
+	if (radacina) {
+		nod* aux = radacina->dreapta;
+		radacina->dreapta = aux->stanga;
+		aux->stanga = radacina;
+		return aux;
+	}else return NULL;
+}
+
+int calculareGradEchilibru(nod* radacina) {
+	if (radacina) {
+		int inaltimeStanga = inaltimeArbore(radacina->stanga);
+		int inaltimeDreapta = inaltimeArbore(radacina->dreapta);
+		return  inaltimeStanga - inaltimeDreapta;
+	}
+	else return 0;
+}
+
+nod* inserareAvionInArboreEchilibrat(nod* radacina, Avion a) {
+	if (radacina) {
+		if (radacina->info.nrLocuri > a.nrLocuri) {
+			radacina->stanga = inserareAvionInArbore(radacina->stanga, a);
+		}
+		else {
+			radacina->dreapta = inserareAvionInArbore(radacina->dreapta, a);
+		}
+		
+		if (calculareGradEchilibru(radacina) == 2) {
+			if (calculareGradEchilibru(radacina->stanga) != 1) {
+				radacina->stanga = rotireLaStanga(radacina->stanga);
+			}
+			radacina = rotireLaDreapta(radacina);
+			
+		}
+		if (calculareGradEchilibru(radacina) == -2) {
+			if (calculareGradEchilibru(radacina->dreapta) != -1) {
+				radacina->dreapta = rotireLaDreapta(radacina->dreapta);
+			}
+			radacina = rotireLaStanga(radacina);
+		}
+		return radacina;
+	}
+	else {
+		nod* nou = (nod*)malloc(sizeof(nod));
+		nou->info = a;
+		nou->dreapta = NULL;
+		nou->stanga = NULL;
+		return nou;
+	}
+}
 
 
 int main() {
@@ -102,10 +180,11 @@ int main() {
 	nod* radacina = NULL;
 	for (int i = 0; i < 10; i++) {
 		Avion a = citireAvionDinFisier(file);
-		radacina = inserareAvionInArbore(radacina, a);
+		radacina = inserareAvionInArboreEchilibrat(radacina, a);
 	}
 	afisareArbore(radacina);
 	printf("obtinere avion\n");
 	Avion cautare = cautareAvionInArboreDupaNrLocuri(radacina, 180);
 	afisareAvion(cautare);
+	printf("Inaltime: %d \n", inaltimeArbore(radacina));
 }
